@@ -35,6 +35,13 @@ class Knowledge < Formula
   def install
     ENV["CGO_ENABLED"] = "1"
 
+    # Mirror .claude/{agents,skills} into the embed location used by
+    # cmd/knowledge/internal/claudeassets — required before go build
+    # so the `knowledge install-claude-assets` subcommand embeds the
+    # latest project agents/skills. The directories are gitignored
+    # so a fresh clone has no stale embed copies. Script is idempotent.
+    system "./scripts/sync-claude-assets.sh"
+
     # ldflags carries the version string the binaries report via
     # `--version` (when that flag lands; harmless otherwise).
     ldflags = %W[

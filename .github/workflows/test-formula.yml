@@ -1,0 +1,54 @@
+# Brew test-bot CI for the knowledge formula. Runs on every push to
+# main and on every PR. Verifies the formula's syntax, audit cleanliness,
+# and a successful install + test cycle on macOS runners.
+#
+# Reference: https://github.com/Homebrew/actions/tree/master/setup-homebrew
+
+name: brew test-bot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-bot:
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS-13 = Intel runner; macOS-14 = Apple Silicon (arm64).
+        # Build matrix exists so an Apple-Silicon-only formula breakage
+        # surfaces immediately rather than at a contributor's first run.
+        os: [macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew bundler gems
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+
+      - name: Run brew test-bot --only-cleanup-before
+        run: brew test-bot --only-cleanup-before
+
+      - name: Run brew test-bot --only-setup
+        run: brew test-bot --only-setup
+
+      - name: Run brew test-bot --only-tap-syntax
+        run: brew test-bot --only-tap-syntax
+
+      # --only-formulae compiles the formula's install block, runs the
+      # test do block, and reports any audit/style violations in one
+      # pass. This is the load-bearing gate.
+      - name: Run brew test-bot --only-formulae
+        run: |
+          brew test-bot \
+            --only-formulae \
+            --root-url=https://github.com/fulminate-io/homebrew-knowledge/releases/download/test
