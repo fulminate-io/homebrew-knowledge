@@ -68,32 +68,18 @@ class Knowledge < Formula
     working_dir HOMEBREW_PREFIX
     log_path var/"log/knowledge-server.log"
     error_log_path var/"log/knowledge-server.log"
-    # launchd does NOT source the user's login shell, so anything in
-    # ~/.zprofile / ~/.zshenv is invisible to the service. Capture every
-    # credential knowledge-server reads from the environment of whoever
-    # runs `brew services start` (i.e. the user's login shell) and bake
-    # them into the generated plist. Empty fallback = feature disabled
-    # (no error). Brew regenerates the plist from this block on every
-    # `brew services restart` / `brew upgrade`, so this is the durable
-    # mechanism — not a hand-edit of ~/Library/LaunchAgents/*.plist.
-    #   - LINEAR_API_KEY:                       Linear project/ticket backend
-    #   - VOYAGE_API_KEY:                       binary-vector embeddings + rerank
-    #   - ANTHROPIC_API_KEY / OPENAI_API_KEY /  HTTP LLM providers
-    #     GEMINI_API_KEY                        (provider = "anthropic"|"openai"|"gemini")
-    # Forwarding ANTHROPIC_API_KEY is SAFE even though the default
-    # config uses provider="claude-cli": the claudecli provider strips
-    # ANTHROPIC_API_KEY from the `claude` subprocess env before exec, so
-    # the CLI always auths via the user's login (subscription), never
-    # paid-API billing — regardless of what's in this env. Same for the
-    # codexcli provider and OPENAI_API_KEY.
-    environment_variables(
-      PATH:              std_service_path_env,
-      LINEAR_API_KEY:    ENV.fetch("LINEAR_API_KEY", ""),
-      VOYAGE_API_KEY:    ENV.fetch("VOYAGE_API_KEY", ""),
-      ANTHROPIC_API_KEY: ENV.fetch("ANTHROPIC_API_KEY", ""),
-      OPENAI_API_KEY:    ENV.fetch("OPENAI_API_KEY", ""),
-      GEMINI_API_KEY:    ENV.fetch("GEMINI_API_KEY", ""),
-    )
+    # Only PATH is pinned here. We deliberately do NOT list the backend /
+    # LLM credentials (LINEAR_API_KEY, VOYAGE_API_KEY, ANTHROPIC_API_KEY,
+    # OPENAI_API_KEY, GEMINI_API_KEY) in this block: Homebrew filters the
+    # process environment when it evaluates the service DSL, so an
+    # `ENV.fetch("LINEAR_API_KEY", "")` here resolves to "" and writes an
+    # EMPTY entry into the plist's EnvironmentVariables — which then
+    # *overrides* whatever the user set via `launchctl setenv`, leaving the
+    # server with an empty key. So credentials must reach the launchd job
+    # another way; see `caveats` (launchctl setenv + restart, or a login
+    # LaunchAgent). PATH is safe to pin because std_service_path_env is a
+    # constant, not env-derived.
+    environment_variables PATH: std_service_path_env
   end
 
   def caveats
@@ -124,16 +110,22 @@ class Knowledge < Formula
         brew services:    #{var}/log/knowledge-server.log
         knowledge start:  ~/.knowledge/server.log
 
-      Credentials: `brew services start knowledge` captures these from
-      the environment of the shell you run it in (so export them in
-      ~/.zprofile / ~/.zshenv first, then start the service):
-        VOYAGE_API_KEY     hybrid vector search + rerank (BM25 works without)
-        LINEAR_API_KEY     Linear project/ticket backend (optional)
-        ANTHROPIC_API_KEY  only if you set provider="anthropic" in ~/.knowledge/config;
-        OPENAI_API_KEY     the default provider="claude-cli" needs none of these
-        GEMINI_API_KEY     — it auths via your `claude` CLI login.
-      After changing which keys are exported, run `brew services restart
-      knowledge` to regenerate the launchd plist.
+      Credentials for the background service: launchd does NOT read your
+      shell rc files, so a `brew services`-managed server can't see env
+      vars from ~/.zprofile / ~/.zshenv. Inject them into launchd, then
+      restart the service:
+
+        launchctl setenv VOYAGE_API_KEY "$VOYAGE_API_KEY"   # vector search + rerank (BM25 works without)
+        launchctl setenv LINEAR_API_KEY "$LINEAR_API_KEY"   # Linear project/ticket backend (optional)
+        brew services restart knowledge
+
+      `launchctl setenv` is session-scoped (cleared on reboot); to persist
+      it, drop those lines in a tiny ~/Library/LaunchAgents/*.plist with
+      RunAtLoad. The LLM keys (ANTHROPIC/OPENAI/GEMINI) are only needed if
+      you set provider="anthropic"|"openai"|"gemini" in ~/.knowledge/config
+      — the default provider="claude-cli" auths via your `claude` login and
+      needs none of them. (Running via `knowledge start` from a terminal
+      instead inherits your full shell env with no launchctl dance.)
 
       Documentation: #{homepage}
     EOS
