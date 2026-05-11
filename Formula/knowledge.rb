@@ -110,22 +110,22 @@ class Knowledge < Formula
         brew services:    #{var}/log/knowledge-server.log
         knowledge start:  ~/.knowledge/server.log
 
-      Credentials for the background service: launchd does NOT read your
-      shell rc files, so a `brew services`-managed server can't see env
-      vars from ~/.zprofile / ~/.zshenv. Inject them into launchd, then
-      restart the service:
+      Credentials: a `brew services`-managed server runs under launchd,
+      which does NOT read your shell rc files — so put your keys in the
+      [credentials] section of ~/.knowledge/config instead (each also
+      falls back to its matching env var when the server runs with one
+      in scope, e.g. via `knowledge start` from a terminal):
 
-        launchctl setenv VOYAGE_API_KEY "$VOYAGE_API_KEY"   # vector search + rerank (BM25 works without)
-        launchctl setenv LINEAR_API_KEY "$LINEAR_API_KEY"   # Linear project/ticket backend (optional)
-        brew services restart knowledge
+        [credentials]
+        voyage_api_key = "..."   # vector embeddings + rerank (BM25 works without)
+        linear_api_key = "..."   # Linear project/ticket backend (optional)
+        # anthropic_api_key / openai_api_key / gemini_api_key — only needed
+        # for dream workers with provider="anthropic"|"openai"|"gemini";
+        # the default provider="claude-cli" auths via your `claude` login.
 
-      `launchctl setenv` is session-scoped (cleared on reboot); to persist
-      it, drop those lines in a tiny ~/Library/LaunchAgents/*.plist with
-      RunAtLoad. The LLM keys (ANTHROPIC/OPENAI/GEMINI) are only needed if
-      you set provider="anthropic"|"openai"|"gemini" in ~/.knowledge/config
-      — the default provider="claude-cli" auths via your `claude` login and
-      needs none of them. (Running via `knowledge start` from a terminal
-      instead inherits your full shell env with no launchctl dance.)
+      chmod the file 600 if you store keys there. The starter config is
+      written on first server run (`brew services start` or `knowledge
+      start`); edit it then run `brew services restart knowledge`.
 
       Documentation: #{homepage}
     EOS
