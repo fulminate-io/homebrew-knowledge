@@ -20,17 +20,17 @@
 class Knowledge < Formula
   desc "Engineering operating system for LLMs (MCP server + graph + reasoning)"
   homepage "https://github.com/fulminate-io/knowledge"
-  version "0.1.2"
+  version "0.1.3"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-darwin-arm64.tar.gz"
-      sha256 "53e880a28612212160818128c3bea26ab5d6099ad94eaf2c818cd349f615fe01"
+      sha256 "739db46dd348010a320941bea3713b81ecfc61a83869d5e323a956c1cf8a338b"
 
       resource "server" do
         url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-darwin-arm64.tar.gz"
-        sha256 "3898a06dea6798d72b836b078c519b3187774e9d9449b29f80f3b9aaa7c3f644"
+        sha256 "3f1dffaafc4974b209d786c83bf55fdbf12df01b560141a3997aa911fd10e17d"
       end
     end
   end
@@ -38,20 +38,20 @@ class Knowledge < Formula
   on_linux do
     on_arm do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-linux-arm64.tar.gz"
-      sha256 "b715d5cd75448e839f9f9ddef7e69c8b751cbba7b0917493e1eb104b18b7802f"
+      sha256 "73e684473eb1d6868576d0e3093eb779093dbcd1ff565b18c2eecc51cbdb42d8"
 
       resource "server" do
         url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-linux-arm64.tar.gz"
-        sha256 "62ca762316b933b2ce1ea7936e4dc62003f7a9584e4b60177606f46ab0c440fc"
+        sha256 "d5a171c21107c26abd7c8b8fdf027d45598c194827d9c356a73ab4b0b4b39412"
       end
     end
     on_intel do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-linux-amd64.tar.gz"
-      sha256 "5aad87e24bdc716d53e71866100e369c9ca6337924babcefc52599f728c72dbc"
+      sha256 "52f2a6b9a23a0cd252611228116fd786b40c835519bc5d1be1575a3f4ad00284"
 
       resource "server" do
         url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-linux-amd64.tar.gz"
-        sha256 "f2ce65caa1138f7d658e078d256c0edb0e3f4a216a42de313c7ea5568a671994"
+        sha256 "aff717f4e54e40cd14d92fdc48a02e9d9def1483ac40dd4f35d01d4aaac0a7b3"
       end
     end
   end
