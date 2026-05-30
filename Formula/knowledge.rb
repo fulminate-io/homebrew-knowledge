@@ -20,17 +20,17 @@
 class Knowledge < Formula
   desc "Engineering operating system for LLMs (MCP server + graph + reasoning)"
   homepage "https://github.com/fulminate-io/knowledge"
-  version "0.1.0"
+  version "0.1.1"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-darwin-arm64.tar.gz"
-      sha256 "3b35a31446805a10ab0a585455ae512cc531c8657b6eca6dd70ec997c110a5ad"
+      sha256 "ffb77a9a7ad138cbfb73b1d9c26dccdc2b5e613a2f58e0827f254c84bb6fbfb9"
 
       resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.1.0/knowledge-server-darwin-arm64.tar.gz"
-        sha256 "5b67f31577e498b183b73986938008807e36ecf5b94475f9571b140fbdaada86"
+        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-darwin-arm64.tar.gz"
+        sha256 "fe4f9753bf0a4ebbdc86f67a439eda7450953fb5ccf21b5ece7918d11eb0ea7d"
       end
     end
   end
@@ -38,20 +38,20 @@ class Knowledge < Formula
   on_linux do
     on_arm do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-linux-arm64.tar.gz"
-      sha256 "1dd67b004eec6ed6ded50685292be533659a49063ffc69e8149b7a8a42dd7a54"
+      sha256 "e9a18e2cd979346dafcb1fa2c5bd5aba665689866ba0485d619a94bfcea2984f"
 
       resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.1.0/knowledge-server-linux-arm64.tar.gz"
-        sha256 "821a2c44ce728ac2d654e791f9156dc790317ca0a0c55a822255a85d9da03401"
+        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-linux-arm64.tar.gz"
+        sha256 "58261f68168df34db39b206a97b7558c36d5cd592c17e469dd48fff5c9bc5829"
       end
     end
     on_intel do
       url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-linux-amd64.tar.gz"
-      sha256 "7f1f596edc901a72e9480934a927227dde9fd2c0221572307a77994fffcbc870"
+      sha256 "f25cf0e4d983e24e9a996fbfacb1f14665e8a97e56cdc1d1aa905ce472f3ad13"
 
       resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.1.0/knowledge-server-linux-amd64.tar.gz"
-        sha256 "46ff810fe23b612b6b77ecf35aaddfca5a83296a702d53b2d2c3fee9a698db4b"
+        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v#{version}/knowledge-server-linux-amd64.tar.gz"
+        sha256 "4e6223af3e11c0ddb7348142f4e2223f1216827795823d751f3df6f25d5b71f2"
       end
     end
   end
