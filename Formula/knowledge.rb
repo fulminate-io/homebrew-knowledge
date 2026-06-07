@@ -1,142 +1,115 @@
-# Homebrew formula for Knowledge — the engineering OS for LLMs.
+# Homebrew formula for Knowledge — the engineering OS for LLMs (client + daemon).
 #
-# Ships two pre-built binaries from the GitHub release:
-#   - knowledge         — the MCP stdio client; what .mcp.json points at.
-#                         Provides start/stop/status + install subcommands.
-#   - knowledge-server  — the long-lived TCP graph server (closed-source,
-#                         garble-obfuscated). The launchd service block
-#                         below runs it; manual lifecycle via `knowledge
-#                         start/stop` also works.
+# Ships the `knowledge` binary: the CLI + the shared MCP daemon (`knowledge
+# serve`). The launchd service below runs the daemon (:15023). The local graph
+# server is a SEPARATE formula (`knowledge-server`, pulled in via depends_on)
+# with its own `brew services` lifecycle — Homebrew supports one service per
+# formula, so the two long-lived processes are two formulae:
 #
-# Both land in #{HOMEBREW_PREFIX}/bin side-by-side, so `knowledge`'s
-# findServerBinary resolves `knowledge-server` via same-dir lookup.
+#   brew services start knowledge-server   # local graph server   (:15022)
+#   brew services start knowledge          # shared MCP daemon     (:15023)
 #
-# Pre-built download (no Go toolchain needed): the client tarball is the
-# main `url`; the server tarball rides a per-platform `resource`. Only the
-# release-pipeline targets are covered — darwin-arm64, linux-amd64,
-# linux-arm64. There is no darwin-amd64 (Intel) build; brew reports the
-# standard "no available download" on that platform.
+# Pre-built download (no Go toolchain needed): darwin-arm64, linux-amd64,
+# linux-arm64. There is no darwin-amd64 (Intel) build.
 
 class Knowledge < Formula
-  desc "Engineering operating system for LLMs (MCP server + graph + reasoning)"
-  homepage "https://github.com/fulminate-io/knowledge"
-  version "0.3.0"
+  desc "Engineering operating system for LLMs (MCP client + shared daemon)"
+  homepage "https://github.com/fulminate-io/knowledge-mcp"
+  version "0.3.1"
   license "Apache-2.0"
+
+  depends_on "fulminate-io/knowledge/knowledge-server"
 
   on_macos do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-darwin-arm64.tar.gz"
-      sha256 "3ccfc1f9736af4e7374af87df9bdfe3b10c5b78cccaea40b55c640b3114d570d"
-
-      resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-server-darwin-arm64.tar.gz"
-        sha256 "e3b672f960d0f2b88a12feef46925c5147fe671551f43a89db2071009afc0ffc"
-      end
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.1/knowledge-darwin-arm64.tar.gz"
+      sha256 "ba053a6160ec1cd3485b9f896eb73cba0b4f11238c03697fdf8cc2809d6b99df"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-linux-arm64.tar.gz"
-      sha256 "3b21d88895215d58c30561c0b5de3a3737df420eff630373381c8097b446b05b"
-
-      resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-server-linux-arm64.tar.gz"
-        sha256 "90cb14e261b2304dd1eff09636a384a22d1f3ba476601f508d5264181702acb7"
-      end
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.1/knowledge-linux-arm64.tar.gz"
+      sha256 "2cdbd309ed713a2a0c37901d685f7ee66a202dbfc59f7509c7026c1d9e59c917"
     end
     on_intel do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-linux-amd64.tar.gz"
-      sha256 "002f70f6f5c95bce3379f9558c1cfd291e726c6ede84aac20b0d0057d7e48145"
-
-      resource "server" do
-        url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.0/knowledge-server-linux-amd64.tar.gz"
-        sha256 "299069a46d11d971bb4330024b0764b002984158d28916cea1bf8403fcdb8a73"
-      end
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.3.1/knowledge-linux-amd64.tar.gz"
+      sha256 "948ec6ff7ffd0a9960303d846033885563267245a66efc7f670ed5b673f2f76c"
     end
   end
 
   def install
-    # Client tarball is the main download; server tarball is the resource.
-    # Each archive holds a single bare binary (no leading directory).
+    # The archive holds a single bare binary (no leading directory).
     bin.install "knowledge"
-    resource("server").stage { bin.install "knowledge-server" }
   end
 
   service do
-    # Run knowledge-server as a launchd-managed background service.
-    # `brew services start knowledge` registers + starts; survives reboots.
-    run [opt_bin/"knowledge-server", "--port", "15022"]
+    # Run the shared MCP daemon (`knowledge serve`) as a launchd-managed
+    # PER-USER service. `brew services start knowledge` registers + starts it;
+    # editors connect at http://127.0.0.1:15023/mcp (port is FIXED — the
+    # install-*-assets subcommands hardcode that URL). Per-user LaunchAgent
+    # (no `require_root`): a root LaunchDaemon runs in a global context that
+    # CANNOT read your login keychain, so Fulminate Cloud auth would silently
+    # break — do NOT `sudo brew services start`.
+    run [opt_bin/"knowledge", "serve", "--http-port", "15023",
+         "--log-level", "info", "--log-file", var/"log/knowledge-daemon.log"]
     keep_alive true
     run_at_load true
     working_dir HOMEBREW_PREFIX
-    log_path var/"log/knowledge-server.log"
-    error_log_path var/"log/knowledge-server.log"
-    # Only PATH is pinned. We deliberately do NOT list LLM/backend creds
-    # here: Homebrew filters the process env when evaluating the service
-    # DSL, so an ENV.fetch(...) would write an EMPTY plist entry that
-    # OVERRIDES whatever the user set via launchctl. Credentials reach the
-    # server via ~/.knowledge/config (see caveats). PATH is a constant.
+    log_path var/"log/knowledge-daemon.log"
+    error_log_path var/"log/knowledge-daemon.log"
+    # Only PATH is pinned. We deliberately do NOT list LLM/backend creds here:
+    # Homebrew filters the process env when evaluating the service DSL, so an
+    # ENV.fetch(...) would write an EMPTY plist entry that OVERRIDES whatever
+    # the user set via launchctl. Credentials reach the pipeline via
+    # ~/.knowledge/config (see caveats). PATH is a constant.
     environment_variables PATH: std_service_path_env
   end
 
   def caveats
     <<~EOS
-      To run the graph server in the background (survives reboots):
+      Start BOTH services (as your user — do NOT use sudo):
 
-        brew services start knowledge
+        brew services start knowledge-server   # local graph server (:15022)
+        brew services start knowledge          # shared MCP daemon  (:15023)
 
-      Then add to your project's .mcp.json:
+      (sudo installs a root LaunchDaemon that can't read your login keychain,
+      which breaks Fulminate Cloud auth.)
 
-        {
-          "mcpServers": {
-            "knowledge": {
-              "command": "knowledge"
-            }
-          }
-        }
+      Register the daemon with your editor(s) + install the agent/skill catalog:
 
-      The `knowledge` stdio client connects to the running server. If you'd
-      rather drive lifecycle manually, skip `brew services` and use:
+        knowledge install-claude-assets    # Claude Code
+        knowledge install-codex-assets     # Codex
 
-        knowledge start    # spawn the server
-        knowledge status   # show pid + node/edge counts
-        knowledge stop     # graceful shutdown
+      These point the editor at the daemon (http://127.0.0.1:15023/mcp); no
+      manual .mcp.json entry is needed.
 
-      Install the agent + skill catalog into your home directory:
+      For Fulminate Cloud, log in once (opens a browser):
 
-        knowledge install-claude-assets
+        knowledge login
 
-      Logs:
-        brew services:    #{var}/log/knowledge-server.log
-        knowledge start:  ~/.knowledge/server.log
+      The daemon reads the token from your login keychain. Without `knowledge
+      login` it runs fully local against knowledge-server.
 
-      Credentials: a `brew services`-managed server runs under launchd,
-      which does NOT read your shell rc files — put your keys in the
-      [credentials] section of ~/.knowledge/config instead:
+      Logs:  #{var}/log/knowledge-daemon.log
+
+      Credentials: launchd does NOT read your shell rc files — put pipeline
+      keys in the [credentials] section of ~/.knowledge/config:
 
         [credentials]
         voyage_api_key = "..."   # vector embeddings + rerank (BM25 works without)
         linear_api_key = "..."   # Linear project/ticket backend (optional)
-        # anthropic_api_key / openai_api_key / gemini_api_key — only needed
-        # for dream workers with provider="anthropic"|"openai"|"gemini";
-        # the default provider="claude-cli" auths via your `claude` login.
-
-      chmod the file 600 if you store keys there. The starter config is
-      written on first server run; edit it then `brew services restart knowledge`.
+        # anthropic_api_key / openai_api_key / gemini_api_key — only needed for
+        # dream workers with provider="anthropic"|"openai"|"gemini"; the default
+        # provider="claude-cli" auths via your `claude` login.
 
       Documentation: #{homepage}
     EOS
   end
 
   test do
-    # The server's --version fast-exits with the embedded release version
-    # before binding any port — deterministic, no network/port/stdin state.
-    assert_match version.to_s, shell_output("#{bin}/knowledge-server --version 2>&1")
-
-    # The client is a long-lived MCP stdio server (it reads stdin), so we
-    # assert it installed as an executable rather than running it — running
-    # it under the test harness can block on stdin.
+    # The binary is a long-lived process (daemon/CLI); assert it installed as
+    # an executable rather than running it (running can block on stdin/port).
     assert_predicate bin/"knowledge", :executable?
   end
 end
