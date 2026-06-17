@@ -13,24 +13,24 @@
 class KnowledgeServer < Formula
   desc "Local graph server for Knowledge (the engineering OS for LLMs)"
   homepage "https://github.com/fulminate-io/knowledge-mcp"
-  version "0.4.3"
+  version "0.4.4"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.3/knowledge-server-darwin-arm64.tar.gz"
-      sha256 "e99bc48b00f9273b78dd24ba19935c3cd6258304face83a49d03ac41173d3d48"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.4/knowledge-server-darwin-arm64.tar.gz"
+      sha256 "558983de734e5df8b32812fe8c63aa5452a6839e8f2a6ecc14ebc7bd5a8a277b"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.3/knowledge-server-linux-arm64.tar.gz"
-      sha256 "6f6d99765d287dfddf99f240d9049d460d522c9ece91ffd0ec8d4af8f747b754"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.4/knowledge-server-linux-arm64.tar.gz"
+      sha256 "b88d3236662826b68e61128d24e44f45ec5ff31ff80a933d3bb3f5f95482c92d"
     end
     on_intel do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.3/knowledge-server-linux-amd64.tar.gz"
-      sha256 "b3ec04d4b199a17ef8164903eedf46509e4a95f52129444f9f2170e0a39dd762"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.4/knowledge-server-linux-amd64.tar.gz"
+      sha256 "fd746263eca09951066819e889d401121927235e966650328880559edda4cc42"
     end
   end
 
