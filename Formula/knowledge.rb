@@ -15,26 +15,26 @@
 class Knowledge < Formula
   desc "Engineering operating system for LLMs (MCP client + shared daemon)"
   homepage "https://github.com/fulminate-io/knowledge-mcp"
-  version "0.4.9"
+  version "0.4.10"
   license "Apache-2.0"
 
   depends_on "fulminate-io/knowledge/knowledge-server"
 
   on_macos do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.9/knowledge-darwin-arm64.tar.gz"
-      sha256 "094486cdda640ecd9cf7636fb387adbe1e8e1ea854e30af5e9fd856260936109"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.10/knowledge-darwin-arm64.tar.gz"
+      sha256 "4e50b21a3875e87b93284f4162e00f687b55ae5a83f66dcefd71af298fcd6723"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.9/knowledge-linux-arm64.tar.gz"
-      sha256 "a03da24a40c752e83a94639dcaf03447adb65ac2d09fa418ed12bea9913ae69b"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.10/knowledge-linux-arm64.tar.gz"
+      sha256 "8d063d401c5f97e117741483c7eef1503e337be388bddd85699c796152da63a4"
     end
     on_intel do
-      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.9/knowledge-linux-amd64.tar.gz"
-      sha256 "95527e6012f0a5ffe9a7ca56a6c4a164807561dd896fa05881cdb808cb07d122"
+      url "https://github.com/fulminate-io/knowledge-mcp/releases/download/v0.4.10/knowledge-linux-amd64.tar.gz"
+      sha256 "14623075491ae1f0a10f6ee38e15a1faf03521bb400c50a026dc1721815077c1"
     end
   end
 
